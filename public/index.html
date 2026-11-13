@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>登記日攝影大賽｜11/25 一起來拍照</title>
+  <meta name="description" content="2026/11/25 15:00 我們要去中正區戶政事務所登記結婚，想邀請你一起來拍照。">
+  <meta name="theme-color" content="#e5c2c0">
+  <meta name="color-scheme" content="light">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:title" content="登記日攝影大賽">
+  <meta property="og:description" content="11/25 15:00 我們要登記結婚了，想邀請你一起來拍照。報名、上傳、投票都在這裡。">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📷%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要內容</a>
+
+  <header class="nav">
+    <div class="nav__inner">
+      <span class="nav__title">登記日攝影大賽</span>
+      <span class="nav__phase" id="nav-phase" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- 開場 -->
+    <section class="tile tile--blush hero" id="hero" aria-labelledby="hero-title">
+      <div class="wrap">
+        <div class="finder">
+          <span class="corners" aria-hidden="true"><i class="c c--tl"></i><i class="c c--tr"></i><i class="c c--bl"></i><i class="c c--br"></i></span>
+          <p class="finder__top"><span class="finder__rec"><i aria-hidden="true"></i><span id="hud-phase">準備中</span></span><span>2026.11.25 三 15:00</span></p>
+          <h1 id="hero-title">我們要登記結婚了。<br>想請你一起來拍照。</h1>
+          <p class="hero__lead" id="hero-lead"></p>
+          <div class="readout" id="readout"></div>
+        </div>
+        <ol class="steps" id="steps" aria-label="活動進度"></ol>
+        <div class="hero__actions" id="hero-actions"></div>
+      </div>
+    </section>
+
+    <!-- 活動資訊 -->
+    <section class="tile" id="info" aria-labelledby="info-title">
+      <div class="wrap">
+        <h2 id="info-title">當天的時間與地點</h2>
+        <div class="when">
+          <p><b>11.25</b><span>2026 年・星期三</span></p>
+          <p><b>15:00</b><span>建議 2:45 左右到，不用趕</span></p>
+        </div>
+        <dl class="facts">
+          <div>
+            <dt>地點</dt>
+            <dd>臺北市中正區戶政事務所<br>羅斯福路一段 8 號 5 樓
+              <a class="btn btn--ghost btn--block facts__map" href="https://www.google.com/maps/search/?api=1&query=%E8%87%BA%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E6%88%B6%E6%94%BF%E4%BA%8B%E5%8B%99%E6%89%80" target="_blank" rel="noopener">用 Google 地圖開啟<span class="visually-hidden">（另開視窗）</span></a>
+            </dd>
+          </div>
+          <div>
+            <dt>交通</dt>
+            <dd>捷運紅線／綠線到<strong>中正紀念堂站</strong>，出站步行幾分鐘，搭電梯到 5 樓。<br><span class="muted">附近停車位不多，搭捷運會比較方便。</span></dd>
+          </div>
+        </dl>
+
+        <h3>小小的規則</h3>
+        <ol class="rules">
+          <li>先在這裡報名，設一組自己好記的數字密碼。</li>
+          <li>當天用手機或相機拍都可以，拍下你覺得好看的瞬間就好。</li>
+          <li>每個人可以交 <strong>2 張</strong>照片，投票開始前都能更換。</li>
+          <li>投票時每人 <strong>1 票</strong>，請投給別人的作品。截止前可以改投。</li>
+          <li>誰投給誰不會公開，票數會在公布結果時一起揭曉。</li>
+        </ol>
+
+        <h3>兩個小獎，都準備了禮物</h3>
+        <ul class="prizes">
+          <li><i aria-hidden="true">01</i><strong>人氣獎</strong><span>大家投票選出的最高票。如果同票，就一起得獎。</span></li>
+          <li><i aria-hidden="true">02</i><strong>我們的最愛</strong><span>由我們兩個人挑一張最喜歡的。</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 報名／登入 -->
+    <section class="tile" id="join" aria-labelledby="join-title" hidden>
+      <div class="wrap wrap--narrow">
+        <h2 id="join-title">報名</h2>
+        <p class="tile__lead" id="join-lead">不需要註冊帳號，填名字和一組數字密碼就可以了。</p>
+
+        <div class="joined" id="joined" hidden></div>
+
+        <div class="segmented" role="group" aria-label="報名或登入">
+          <button type="button" class="segmented__btn" data-action="mode" data-mode="register" aria-pressed="true">第一次來</button>
+          <button type="button" class="segmented__btn" data-action="mode" data-mode="login" aria-pressed="false">我報過了</button>
+        </div>
+
+        <form id="join-form" novalidate>
+          <div class="field">
+            <label for="f-name">名字</label>
+            <input id="f-name" name="name" type="text" maxlength="12" autocomplete="nickname" autocapitalize="off" spellcheck="false" enterkeyhint="next" placeholder="朋友們平常叫你的名字…" aria-describedby="f-name-err" required>
+            <p class="field__error" id="f-name-err" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="f-pin">密碼（4–6 位數字）</label>
+            <div class="field__row">
+              <input id="f-pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="6" autocomplete="new-password" enterkeyhint="done" placeholder="例如 1125…" aria-describedby="f-pin-hint f-pin-err" required>
+              <button type="button" class="field__toggle" data-action="toggle-pin" aria-pressed="false" aria-label="顯示密碼">顯示</button>
+            </div>
+            <p class="field__hint" id="f-pin-hint">之後上傳和投票會用到，請選一組好記的數字。</p>
+            <p class="field__error" id="f-pin-err" role="alert"></p>
+          </div>
+          <fieldset class="field" id="f-attend">
+            <legend>11/25 會來現場嗎？</legend>
+            <div class="choice">
+              <label><input type="radio" name="attending" value="yes" checked><span>我會到場</span></label>
+              <label><input type="radio" name="attending" value="no"><span>不克前來</span></label>
+            </div>
+          </fieldset>
+          <p class="form__error" id="join-error" role="alert"></p>
+          <button type="submit" class="btn btn--block" id="join-submit">報名</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 我的區塊（登入後） -->
+    <section class="tile" id="me" aria-labelledby="me-title" hidden>
+      <div class="wrap wrap--narrow" id="me-body"></div>
+    </section>
+
+    <!-- 投票 -->
+    <section class="tile" id="vote" aria-labelledby="vote-title" hidden>
+      <div class="wrap" id="vote-body"></div>
+    </section>
+
+    <!-- 結果 -->
+    <section class="tile" id="results" aria-labelledby="results-title" hidden>
+      <div class="wrap" id="results-body"></div>
+    </section>
+
+    <!-- 參加名單 -->
+    <section class="tile" id="roster" aria-labelledby="roster-title">
+      <div class="wrap" id="roster-body"></div>
+    </section>
+  </main>
+
+  <!-- 管理面板（網址加 #admin） -->
+  <section class="tile admin" id="admin" aria-labelledby="admin-title" hidden>
+    <div class="wrap wrap--narrow" id="admin-body"></div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p>有任何問題，在 LINE 群組跟我們說一聲就好。</p>
+      <p class="footer__fine">照片只會用在這次活動。謝謝你來。</p>
+    </div>
+  </footer>
+
+  <!-- 看大圖 -->
+  <dialog class="lightbox" id="lightbox" aria-label="看大圖">
+    <button type="button" class="chip-btn lightbox__close" data-action="lb-close" aria-label="關閉">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="lightbox__stage" id="lb-stage">
+      <img id="lb-img" alt="">
+    </div>
+    <button type="button" class="chip-btn lightbox__nav lightbox__nav--prev" data-action="lb-prev" aria-label="上一張">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="chip-btn lightbox__nav lightbox__nav--next" data-action="lb-next" aria-label="下一張">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="lightbox__bar">
+      <p class="lightbox__caption" id="lb-caption" aria-live="polite"></p>
+      <div id="lb-action"></div>
+    </div>
+  </dialog>
+
+  <!-- 確認視窗 -->
+  <dialog class="confirm" id="confirm" aria-labelledby="confirm-title">
+    <form method="dialog">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-text"></p>
+      <div class="confirm__actions">
+        <button class="btn btn--ghost" value="cancel">先不要</button>
+        <button class="btn" value="ok" id="confirm-ok">確定</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <input class="visually-hidden" type="file" id="file-input" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+
+  <noscript><p class="noscript">這個網站需要開啟 JavaScript 才能報名和投票。</p></noscript>
+  <script src="app.js" defer></script>
+</body>
+</html>
