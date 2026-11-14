@@ -71,7 +71,7 @@ revoke all on all tables in schema public from anon, authenticated;
 
 -- ═════════ 內部小工具 ═════════
 create or replace function public._err(p_msg text, p_status int)
-returns jsonb language sql immutable as $$
+returns jsonb language sql immutable set search_path = public as $$
   select jsonb_build_object('error', p_msg, 'status', p_status) $$;
 
 create or replace function public._sha(p text)
@@ -79,18 +79,18 @@ returns text language sql immutable set search_path = extensions as $$
   select encode(digest(p, 'sha256'), 'hex') $$;
 
 create or replace function public._clean_name(p text)
-returns text language sql immutable as $$
+returns text language sql immutable set search_path = public as $$
   select btrim(regexp_replace(regexp_replace(normalize(coalesce(p, ''), NFC), '[[:cntrl:]]', '', 'g'), '\s+', ' ', 'g')) $$;
 
 create or replace function public._name_key(p text)
-returns text language sql immutable as $$
+returns text language sql immutable set search_path = public as $$
   select regexp_replace(lower(normalize(p, NFKC)), '\s+', '', 'g') $$;
 
 create or replace function public._phase()
-returns int language sql stable as $$ select phase from public.settings where id = 1 $$;
+returns int language sql stable set search_path = public as $$ select phase from public.settings where id = 1 $$;
 
 create or replace function public._uid(p_token text)
-returns text language sql stable as $$
+returns text language sql stable set search_path = public, extensions as $$
   select participant_id from public.sessions where token_hash = public._sha(coalesce(p_token, '')) $$;
 
 create or replace function public._issue_token(p_uid text)
@@ -106,7 +106,7 @@ end $$;
 
 -- 被鎖住就回傳錯誤訊息，沒有就回傳 null
 create or replace function public._locked(p_key text)
-returns jsonb language plpgsql stable as $$
+returns jsonb language plpgsql stable set search_path = public as $$
 declare v_until timestamptz;
 begin
   select until into v_until from public.fails where key = p_key;
@@ -118,7 +118,7 @@ begin
 end $$;
 
 create or replace function public._note_fail(p_key text)
-returns void language sql as $$
+returns void language sql set search_path = public as $$
   insert into public.fails as f (key, count) values (p_key, 1)
   on conflict (key) do update set
     count = case when f.count + 1 >= 8 then 0 else f.count + 1 end,
@@ -174,7 +174,7 @@ begin
 end $$;
 
 create or replace function public._admin_ok(p_token text)
-returns boolean language sql stable as $$
+returns boolean language sql stable set search_path = public, extensions as $$
   select exists (select 1 from public.admin_sessions
                  where token_hash = public._sha(coalesce(p_token, '')) and expires_at > now()) $$;
 
