@@ -7,6 +7,9 @@
   const LONG_EDGE = 2000;
   const THUMB_EDGE = 600;
   const HEIC_LIB = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+  const CFG = window.CONTEST_CONFIG || {};
+  const SB_URL = (CFG.supabaseUrl || '').replace(/\/+$/, '');
+  const SB_KEY = CFG.supabaseAnonKey || '';
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) =>
@@ -31,22 +34,24 @@
 
   // ---------- 與後端溝通 ----------
 
-  async function api(method, path, body, useAdmin) {
-    const headers = {};
-    const t = useAdmin ? adminToken : token;
-    if (t) headers.Authorization = 'Bearer ' + t;
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // 所有資料都透過 Supabase 的資料庫函式（supabase/schema.sql）存取
+  async function rpc(fn, args = {}) {
+    if (!SB_URL || !SB_KEY) throw new Error('網站還在設定中，晚一點再來。');
     let res;
     try {
-      res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+      res = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args),
+      });
     } catch {
       throw new Error('連不上網路，檢查一下訊號再試一次。');
     }
-    let data = {};
+    let data = null;
     try { data = await res.json(); } catch {}
-    if (!res.ok) {
-      const err = new Error(data.error || '出了點狀況，請再試一次。');
-      err.status = res.status;
+    if (!res.ok || !data || data.error) {
+      const err = new Error((data && data.error) || '出了點狀況，請再試一次。');
+      err.status = (data && data.status) || res.status;
       throw err;
     }
     return data;
@@ -67,7 +72,7 @@
     const seq = stateSeq;
     let next;
     try {
-      next = await api('GET', '/api/state');
+      next = await rpc('get_state', { p_token: token });
     } catch (err) {
       if (!state) $('hero-lead').textContent = err.message + '（會自動重試）';
       return;
@@ -86,8 +91,8 @@
   }
 
   const scrollBehavior = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
-  const thumbUrl = (id) => `/photos/${id}_t.jpg`;
-  const fullUrl = (id) => `/photos/${id}.jpg`;
+  const thumbUrl = (id) => `${SB_URL}/storage/v1/object/public/photos/${id}_t.jpg`;
+  const fullUrl = (id) => `${SB_URL}/storage/v1/object/public/photos/${id}.jpg`;
 
   function toast(message) {
     const el = $('toast');
@@ -149,6 +154,10 @@
       3: '結果出來了。謝謝你們，把這一天拍得這麼好。',
     }[phase];
     $('hero-lead').textContent = lead;
+    // 活動結束後（投票、公布結果）改成道謝的語氣
+    setHTML($('hero-title'), phase === 1
+      ? '我們要登記結婚了。<br>想請你一起來拍照。'
+      : '我們登記結婚了。<br>謝謝你們幫我們拍照。');
 
     setHTML($('steps'), PHASES.map((label, i) => {
       const n = i + 1;
@@ -428,9 +437,9 @@
     submit.disabled = true;
     submit.innerHTML = `<span class="spinner" aria-hidden="true"></span>${m === 'login' ? '登入中…' : '報名中…'}`;
     try {
-      const body = { name, pin };
-      if (m === 'register') body.attending = $('join-form').elements.attending.value === 'yes';
-      const data = await api('POST', m === 'login' ? '/api/login' : '/api/register', body);
+      const args = { p_name: name, p_pin: pin };
+      if (m === 'register') args.p_attending = $('join-form').elements.attending.value === 'yes';
+      const data = await rpc(m === 'login' ? 'login' : 'register', args);
       token = data.token;
       store.set('pc_token', token);
       $('join-form').reset();
@@ -454,7 +463,7 @@
   async function logout() {
     const ok = await confirmDialog('要登出嗎？', '之後用同一組名字和密碼就能再登入。', '登出');
     if (!ok) return;
-    try { await api('POST', '/api/logout', {}); } catch {}
+    try { await rpc('logout', { p_token: token }); } catch {}
     token = null;
     store.del('pc_token');
     uploads = [];
@@ -465,7 +474,7 @@
   async function setAttending(value) {
     if (state.me.attending === value) return;
     try {
-      const data = await api('POST', '/api/me/attending', { attending: value });
+      const data = await rpc('set_attending', { p_token: token, p_attending: value });
       applyState(data.state);
       toast(value ? '太好了，當天見！' : '沒關係，謝謝你告訴我們。');
     } catch (err) {
@@ -558,47 +567,62 @@
     }
   }
 
-  function send(u) {
+  const newPhotoId = () =>
+    Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
+
+  function setProgress(u, ratio) {
+    u.progress = Math.min(99, Math.round(ratio * 100));
+    const veil = document.querySelector(`[data-upload="${u.key}"]`);
+    if (veil) {
+      veil.querySelector('span').textContent = `上傳中 ${u.progress}%`;
+      veil.querySelector('i').style.transform = `scaleX(${u.progress / 100})`;
+    }
+  }
+
+  // 用 XHR 直接傳到 Supabase Storage，才拿得到上傳進度
+  function putFile(u, name, blob, done, total) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      u.xhr = xhr;
+      xhr.open('POST', `${SB_URL}/storage/v1/object/photos/${name}`);
+      xhr.setRequestHeader('apikey', SB_KEY);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+      xhr.setRequestHeader('Content-Type', 'image/jpeg');
+      xhr.setRequestHeader('Cache-Control', 'max-age=31536000');
+      xhr.timeout = 120000;
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(u, (done + e.loaded) / total); };
+      xhr.onerror = () => reject(new Error('網路不穩'));
+      xhr.ontimeout = () => reject(new Error('傳太久了'));
+      xhr.onabort = () => reject(new Error('已取消'));
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(new Error(xhr.status === 413 ? '檔案太大了' : '伺服器沒收到')));
+      xhr.send(blob);
+    });
+  }
+
+  async function send(u) {
     u.status = 'upload';
     u.progress = 0;
     u.error = '';
     render();
-    const xhr = new XMLHttpRequest();
-    u.xhr = xhr;
-    xhr.open('POST', `/api/photos?t=${u.thumb.size}&w=${u.w}&h=${u.h}`);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-    xhr.timeout = 120000;
-    xhr.upload.onprogress = (e) => {
-      if (!e.lengthComputable) return;
-      u.progress = Math.min(99, Math.round((e.loaded / e.total) * 100));
-      const veil = document.querySelector(`[data-upload="${u.key}"]`);
-      if (veil) {
-        veil.querySelector('span').textContent = `上傳中 ${u.progress}%`;
-        veil.querySelector('i').style.transform = `scaleX(${u.progress / 100})`;
-      }
-    };
-    const fail = (message) => {
+    const id = newPhotoId(); // 每次重試都用新的檔名，避免和上次傳一半的檔案撞名
+    const total = u.thumb.size + u.full.size;
+    try {
+      await putFile(u, `${id}_t.jpg`, u.thumb, 0, total);
+      await putFile(u, `${id}.jpg`, u.full, u.thumb.size, total);
+      if (!uploads.includes(u)) return;
+      const data = await rpc('add_photo', { p_token: token, p_id: id, p_w: u.w, p_h: u.h });
+      dropUpload(u);
+      applyState(data.state);
+      toast('照片收到了！');
+    } catch (err) {
       if (!uploads.includes(u)) return;
       u.status = 'error';
-      u.error = message;
+      u.error = err.message;
       render();
-    };
-    xhr.onerror = () => fail('網路不穩');
-    xhr.ontimeout = () => fail('傳太久了');
-    xhr.onload = () => {
-      let data = {};
-      try { data = JSON.parse(xhr.responseText); } catch {}
-      if (xhr.status === 201) {
-        dropUpload(u);
-        applyState(data.state);
-        toast('照片收到了！');
-      } else {
-        fail(data.error || '伺服器沒收到');
-        if (xhr.status === 401 || xhr.status === 409) refresh();
-      }
-    };
-    xhr.send(new Blob([u.thumb, u.full]));
+      if (err.status === 401 || err.status === 409) refresh();
+    }
   }
 
   function dropUpload(u) {
@@ -647,7 +671,7 @@
     const ok = await confirmDialog('刪掉這張？', '刪掉就不能復原，但你可以再上傳別張。', '刪除');
     if (!ok) return;
     try {
-      const data = await api('DELETE', '/api/photos/' + id);
+      const data = await rpc('delete_photo', { p_token: token, p_id: id });
       applyState(data.state);
       toast('已刪除。');
     } catch (err) {
@@ -670,7 +694,7 @@
     busyVote = id;
     render();
     try {
-      const data = await api('POST', '/api/vote', { photoId: id });
+      const data = await rpc('cast_vote', { p_token: token, p_photo_id: id });
       busyVote = null;
       applyState(data.state);
       toast('投好了！截止前都可以改。');
@@ -777,7 +801,7 @@
 
   async function refreshAdmin() {
     try {
-      adminState = await api('GET', '/api/admin/state', undefined, true);
+      adminState = await rpc('admin_state', { p_token: adminToken });
     } catch (err) {
       if (err.status === 401) {
         adminToken = null;
@@ -849,9 +873,9 @@
       <p class="me__note"><a href="#">回活動頁</a>・這頁每 10 秒自動更新。看得到誰投了票，但看不到投給誰。</p>`);
   }
 
-  async function adminCall(method, path, body) {
+  async function adminCall(fn, args) {
     try {
-      adminState = await api(method, path, body, true);
+      adminState = await rpc(fn, { p_token: adminToken, ...args });
       renderAdmin();
       refresh();
       return true;
@@ -868,7 +892,7 @@
     if (button.disabled) return;
     button.disabled = true;
     try {
-      const data = await api('POST', '/api/admin/login', { password: input.value });
+      const data = await rpc('admin_login', { p_password: input.value });
       adminToken = data.token;
       store.set('pc_admin', adminToken);
       adminState = data.state;
@@ -938,16 +962,16 @@
           3: '所有人馬上會看到得獎照片和票數。記得先選好「我們的最愛」。',
         }[phase];
         if (await confirmDialog(`切換到「${PHASES[phase - 1]}」？`, warn, '切換')) {
-          if (await adminCall('POST', '/api/admin/phase', { phase })) toast(`已切換到「${PHASES[phase - 1]}」`);
+          if (await adminCall('admin_set_phase', { p_phase: phase })) toast(`已切換到「${PHASES[phase - 1]}」`);
         }
         break;
       }
       case 'admin-favorite':
-        adminCall('POST', '/api/admin/favorite', { photoId: id, favorite: el.getAttribute('aria-pressed') !== 'true' });
+        adminCall('admin_set_favorite', { p_photo_id: id, p_favorite: el.getAttribute('aria-pressed') !== 'true' });
         break;
       case 'admin-remove':
         if (await confirmDialog(`移除 ${el.dataset.name}？`, '這個人的照片和投出的票會一起刪除，無法復原。', '移除')) {
-          if (await adminCall('DELETE', '/api/admin/participants/' + id)) toast('已移除。');
+          if (await adminCall('admin_remove_participant', { p_id: id })) toast('已移除。');
         }
         break;
       case 'admin-logout':
