@@ -149,14 +149,14 @@
     const lead = {
       1: me
         ? `${me.name}，謝謝你願意來。拍完之後，照片可以回到這裡上傳。`
-        : '11 月 25 日下午，想邀請你來見證，也幫我們留下這一天。報名、交照片、投票都在這一頁。',
+        : '11 月 25 日下午，想邀請你來見證，也幫我們留下這一天。報名、交照片、投票都在這裡呦',
       2: '照片都到齊了，謝謝大家。請選一張你最喜歡的。',
       3: '結果出來了。謝謝你們，把這一天拍得這麼好。',
     }[phase];
     $('hero-lead').textContent = lead;
     // 活動結束後（投票、公布結果）改成道謝的語氣
     setHTML($('hero-title'), phase === 1
-      ? '我們要登記結婚了。<br>想請你一起來拍照。'
+      ? '我們要結婚了！<br>一起和我們紀錄吧'
       : '我們登記結婚了。<br>謝謝你們幫我們拍照。');
 
     setHTML($('steps'), PHASES.map((label, i) => {
@@ -168,7 +168,7 @@
     const actions = {
       1: me
         ? '<a class="btn" href="#me">交照片</a><a class="btn btn--ghost" href="#info">活動資訊</a>'
-        : '<a class="btn" href="#join">我要報名</a><a class="btn btn--ghost" href="#info">活動資訊</a>',
+        : '<a class="btn" href="#join">我要參賽</a><a class="btn btn--ghost" href="#info">活動資訊</a>',
       2: '<a class="btn" href="#vote">去投票</a>',
       3: '<a class="btn" href="#results">看得獎照片</a>',
     }[phase];
@@ -194,7 +194,7 @@
       ? '用報名時的名字和密碼登入，就可以投票了。'
       : m === 'login'
         ? '輸入報名時的名字和密碼就可以了。'
-        : '不需要註冊帳號，填名字和一組數字密碼就可以了。';
+        : '輸入名字和一組數字密碼報名，下次用這組名字數字登入';
     document.querySelector('#join .segmented').hidden = loginOnly;
     for (const b of document.querySelectorAll('[data-action="mode"]')) {
       b.setAttribute('aria-pressed', String(b.dataset.mode === m));
@@ -203,7 +203,7 @@
     $('joined').hidden = !people.length;
     setHTML($('joined'), people.length ? `
       <p class="joined__title">已經報名的朋友（${people.length}）</p>
-      <ul>${people.map((p) => `<li><button type="button" class="chip${p.attending ? '' : ' chip--away'}" data-action="pick-name" data-name="${esc(p.name)}">${esc(p.name)}${p.attending ? '' : '<small>不克前來</small>'}</button></li>`).join('')}</ul>
+      <ul>${people.map((p) => `<li><button type="button" class="chip${p.attending ? '' : ' chip--away'}" data-action="pick-name" data-name="${esc(p.name)}">${esc(p.name)}${p.attending ? '' : '<small>我不行QQ</small>'}</button></li>`).join('')}</ul>
       <p class="joined__hint">看到自己的名字了嗎？點一下就可以直接登入。</p>` : '');
     $('f-attend').hidden = m === 'login';
     $('f-pin-hint').hidden = m === 'login';
@@ -289,7 +289,7 @@
         <div class="me__label" id="attend-label">11/25 會來現場嗎？</div>
         <div class="segmented" role="group" aria-labelledby="attend-label" style="margin:0">
           <button type="button" class="segmented__btn" data-action="attend" data-value="yes" aria-pressed="${me.attending}">我會到場</button>
-          <button type="button" class="segmented__btn" data-action="attend" data-value="no" aria-pressed="${!me.attending}">不克前來</button>
+          <button type="button" class="segmented__btn" data-action="attend" data-value="no" aria-pressed="${!me.attending}">我不行QQ</button>
         </div>
       </div>
       <div class="me__block">
@@ -367,8 +367,8 @@
         <div class="award__list" data-gallery>${popular.map(winner).join('') || '<p class="muted">這次沒有人投票，人氣獎先保留。</p>'}</div>
       </div>
       <div class="award">
-        <h3 class="award__title">我們的最愛</h3>
-        <p class="award__sub">我們兩個人最喜歡的一張。</p>
+        <h3 class="award__title">我們ㄉPick</h3>
+        <p class="award__sub">我們會挑一張我們最喜歡的嘻嘻</p>
         <div class="award__list" data-gallery>${favorites.map(winner).join('') || '<p class="muted">我們還在挑，晚一點公布。</p>'}</div>
       </div>
       <h3>全部照片</h3>
@@ -382,7 +382,7 @@
       <li>
         <span class="avatar${p.attending ? '' : ' avatar--away'}" aria-hidden="true">${esc([...p.name][0])}</span>
         <span class="roster__name">${esc(p.name)}${state.me && state.me.id === p.id ? '（你）' : ''}
-          <small>${p.attending ? '會到場' : '不克前來'}</small>
+          <small>${p.attending ? '會到場' : '我不行QQ'}</small>
         </span>
         <span class="roster__thumbs" data-gallery>${p.photos.map((ph) => `
           <button type="button" data-action="open" data-id="${ph.id}" data-name="${esc(p.name)}" aria-label="看 ${esc(p.name)} 的照片大圖">
@@ -397,7 +397,7 @@
       </div>
       ${list.length
         ? `<ul class="roster__list">${rows}</ul>`
-        : '<p class="empty">還沒有人報名，歡迎當第一位。</p>'}`);
+        : ''}`);
   }
 
   // ---------- 確認視窗 ----------
@@ -844,12 +844,12 @@
           <img src="${thumbUrl(p.id)}" alt="" width="56" height="56" loading="lazy" decoding="async">
         </button>
         <span class="admin__main">${esc(p.ownerName)}<small>${p.votes} 票</small></span>
-        <button type="button" class="btn btn--small ${p.favorite ? '' : 'btn--ghost'}" data-action="admin-favorite" data-id="${p.id}" aria-pressed="${p.favorite}">${p.favorite ? '★ 我們的最愛' : '☆ 選為最愛'}</button>
+        <button type="button" class="btn btn--small ${p.favorite ? '' : 'btn--ghost'}" data-action="admin-favorite" data-id="${p.id}" aria-pressed="${p.favorite}">${p.favorite ? '★ 我們ㄉPick' : '☆ 選為我們ㄉPick'}</button>
       </li>`).join('');
     const people = s.participants.map((p) => `
       <li>
         <span class="admin__main">${esc(p.name)}
-          <small>${p.attending ? '會到場' : '不克前來'}・${p.photoCount} 張・${p.hasVoted ? '已投票' : '還沒投票'}</small>
+          <small>${p.attending ? '會到場' : '我不行QQ'}・${p.photoCount} 張・${p.hasVoted ? '已投票' : '還沒投票'}</small>
         </span>
         <button type="button" class="btn btn--small btn--quiet" data-action="admin-remove" data-id="${p.id}" data-name="${esc(p.name)}">移除</button>
       </li>`).join('');
@@ -959,7 +959,7 @@
         const warn = {
           1: '朋友可以再報名、換照片。已經投的票會保留。',
           2: '朋友就不能再報名或換照片了，開始投票。',
-          3: '所有人馬上會看到得獎照片和票數。記得先選好「我們的最愛」。',
+          3: '所有人馬上會看到得獎照片和票數。記得先選好「我們ㄉPick」。',
         }[phase];
         if (await confirmDialog(`切換到「${PHASES[phase - 1]}」？`, warn, '切換')) {
           if (await adminCall('admin_set_phase', { p_phase: phase })) toast(`已切換到「${PHASES[phase - 1]}」`);

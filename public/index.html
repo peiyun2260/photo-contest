@@ -31,7 +31,7 @@
         <div class="finder">
           <span class="corners" aria-hidden="true"><i class="c c--tl"></i><i class="c c--tr"></i><i class="c c--bl"></i><i class="c c--br"></i></span>
           <p class="finder__top"><span class="finder__rec"><i aria-hidden="true"></i><span id="hud-phase">準備中</span></span><span>2026.11.25 三 15:00</span></p>
-          <h1 id="hero-title">我們要登記結婚了。<br>想請你一起來拍照。</h1>
+          <h1 id="hero-title">我們要結婚了！<br>一起和我們紀錄吧</h1>
           <p class="hero__lead" id="hero-lead"></p>
           <div class="readout" id="readout"></div>
         </div>
@@ -46,7 +46,7 @@
         <h2 id="info-title">當天的時間與地點</h2>
         <div class="when">
           <p><b>11.25</b><span>2026 年・星期三</span></p>
-          <p><b>15:00</b><span>建議 2:45 左右到，不用趕</span></p>
+          <p><b>15:00</b></p>
         </div>
         <dl class="facts">
           <div>
@@ -61,19 +61,18 @@
           </div>
         </dl>
 
-        <h3>小小的規則</h3>
+        <h3>怎麼報名</h3>
         <ol class="rules">
-          <li>先在這裡報名，設一組自己好記的數字密碼。</li>
-          <li>當天用手機或相機拍都可以，拍下你覺得好看的瞬間就好。</li>
-          <li>每個人可以交 <strong>2 張</strong>照片，投票開始前都能更換。</li>
-          <li>投票時每人 <strong>1 票</strong>，請投給別人的作品。截止前可以改投。</li>
-          <li>誰投給誰不會公開，票數會在公布結果時一起揭曉。</li>
+          <li>輸入名字和簡單密碼</li>
+          <li>當天拍下美麗ㄉ瞬間</li>
+          <li>每個人可以投稿<strong>兩張</strong>你覺得最讚的照片</li>
+          <li>每人<strong>一票</strong>但不能投給自己</li>
         </ol>
 
         <h3>兩個小獎，都準備了禮物</h3>
         <ul class="prizes">
-          <li><i aria-hidden="true">01</i><strong>人氣獎</strong><span>大家投票選出的最高票。如果同票，就一起得獎。</span></li>
-          <li><i aria-hidden="true">02</i><strong>我們的最愛</strong><span>由我們兩個人挑一張最喜歡的。</span></li>
+          <li><i aria-hidden="true">01</i><strong>人氣獎</strong><span>大家投票選出的最高票。</span></li>
+          <li><i aria-hidden="true">02</i><strong>我們ㄉPick</strong><span>我們會挑一張我們最喜歡的嘻嘻</span></li>
         </ul>
       </div>
     </section>
@@ -82,7 +81,7 @@
     <section class="tile" id="join" aria-labelledby="join-title" hidden>
       <div class="wrap wrap--narrow">
         <h2 id="join-title">報名</h2>
-        <p class="tile__lead" id="join-lead">不需要註冊帳號，填名字和一組數字密碼就可以了。</p>
+        <p class="tile__lead" id="join-lead">輸入名字和一組數字密碼報名，下次用這組名字數字登入</p>
 
         <div class="joined" id="joined" hidden></div>
 
@@ -94,7 +93,7 @@
         <form id="join-form" novalidate>
           <div class="field">
             <label for="f-name">名字</label>
-            <input id="f-name" name="name" type="text" maxlength="12" autocomplete="nickname" autocapitalize="off" spellcheck="false" enterkeyhint="next" placeholder="朋友們平常叫你的名字…" aria-describedby="f-name-err" required>
+            <input id="f-name" name="name" type="text" maxlength="12" autocomplete="nickname" autocapitalize="off" spellcheck="false" enterkeyhint="next" placeholder="你是誰" aria-describedby="f-name-err" required>
             <p class="field__error" id="f-name-err" role="alert"></p>
           </div>
           <div class="field">
@@ -110,7 +109,7 @@
             <legend>11/25 會來現場嗎？</legend>
             <div class="choice">
               <label><input type="radio" name="attending" value="yes" checked><span>我會到場</span></label>
-              <label><input type="radio" name="attending" value="no"><span>不克前來</span></label>
+              <label><input type="radio" name="attending" value="no"><span>我不行QQ</span></label>
             </div>
           </fieldset>
           <p class="form__error" id="join-error" role="alert"></p>
@@ -145,12 +144,7 @@
     <div class="wrap wrap--narrow" id="admin-body"></div>
   </section>
 
-  <footer class="footer">
-    <div class="wrap">
-      <p>有任何問題，在 LINE 群組跟我們說一聲就好。</p>
-      <p class="footer__fine">照片只會用在這次活動。謝謝你來。</p>
-    </div>
-  </footer>
+  <footer class="footer"></footer>
 
   <!-- 看大圖 -->
   <dialog class="lightbox" id="lightbox" aria-label="看大圖">
