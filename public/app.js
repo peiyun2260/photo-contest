@@ -91,6 +91,9 @@
   }
 
   const scrollBehavior = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+  // 出席狀態：全程（登記＋小樹屋）／只來登記／不能來
+  const ATTEND = { full: '全程參加', registry: '只來登記', no: '我不行QQ' };
+  const attendOf = (p) => (!p.attending ? 'no' : p.cafe === false ? 'registry' : 'full');
   const thumbUrl = (id) => `${SB_URL}/storage/v1/object/public/photos/${id}_t.jpg`;
   const fullUrl = (id) => `${SB_URL}/storage/v1/object/public/photos/${id}.jpg`;
 
@@ -205,7 +208,7 @@
     $('joined').hidden = !people.length;
     setHTML($('joined'), people.length ? `
       <p class="joined__title">已經報名的朋友（${people.length}）</p>
-      <ul>${people.map((p) => `<li><button type="button" class="chip${p.attending ? '' : ' chip--away'}" data-action="pick-name" data-name="${esc(p.name)}">${esc(p.name)}${p.attending ? '' : '<small>我不行QQ</small>'}</button></li>`).join('')}</ul>
+      <ul>${people.map((p) => `<li><button type="button" class="chip${p.attending ? '' : ' chip--away'}" data-action="pick-name" data-name="${esc(p.name)}">${esc(p.name)}${attendOf(p) === 'full' ? '' : `<small>${ATTEND[attendOf(p)]}</small>`}</button></li>`).join('')}</ul>
       <p class="joined__hint">看到自己的名字了嗎？點一下就可以直接登入。</p>` : '');
     $('f-attend').hidden = m === 'login';
     $('f-pin-hint').hidden = m === 'login';
@@ -288,10 +291,9 @@
 
     setHTML($('me-body'), head + `
       <div class="me__block">
-        <div class="me__label" id="attend-label">11/25 會來現場嗎？</div>
+        <div class="me__label" id="attend-label">11/25 會來嗎？</div>
         <div class="segmented" role="group" aria-labelledby="attend-label" style="margin:0">
-          <button type="button" class="segmented__btn" data-action="attend" data-value="yes" aria-pressed="${me.attending}">我會到場</button>
-          <button type="button" class="segmented__btn" data-action="attend" data-value="no" aria-pressed="${!me.attending}">我不行QQ</button>
+          ${Object.entries(ATTEND).map(([v, label]) => `<button type="button" class="segmented__btn" data-action="attend" data-value="${v}" aria-pressed="${attendOf(me) === v}">${label}</button>`).join('')}
         </div>
       </div>
       <div class="me__block">
@@ -380,11 +382,12 @@
   function renderRoster() {
     const list = state.participants;
     const coming = list.filter((p) => p.attending).length;
+    const cafe = list.filter((p) => attendOf(p) === 'full').length;
     const rows = list.map((p) => `
       <li>
         <span class="avatar${p.attending ? '' : ' avatar--away'}" aria-hidden="true">${esc([...p.name][0])}</span>
         <span class="roster__name">${esc(p.name)}${state.me && state.me.id === p.id ? '（你）' : ''}
-          <small>${p.attending ? '會到場' : '我不行QQ'}</small>
+          <small>${ATTEND[attendOf(p)]}</small>
         </span>
         <span class="roster__thumbs" data-gallery>${p.photos.map((ph) => `
           <button type="button" data-action="open" data-id="${ph.id}" data-name="${esc(p.name)}" aria-label="看 ${esc(p.name)} 的照片大圖">
@@ -395,7 +398,8 @@
       <h2 id="roster-title">已經報名的朋友</h2>
       <div class="roster__stats">
         <p><b>${list.length}</b><span>人報名</span></p>
-        <p><b>${coming}</b><span>人會到場</span></p>
+        <p><b>${coming}</b><span>人來登記</span></p>
+        <p><b>${cafe}</b><span>人去小樹屋</span></p>
       </div>
       ${list.length
         ? `<ul class="roster__list">${rows}</ul>`
@@ -440,7 +444,11 @@
     submit.innerHTML = `<span class="spinner" aria-hidden="true"></span>${m === 'login' ? '登入中…' : '報名中…'}`;
     try {
       const args = { p_name: name, p_pin: pin };
-      if (m === 'register') args.p_attending = $('join-form').elements.attending.value === 'yes';
+      if (m === 'register') {
+        const v = $('join-form').elements.attending.value;
+        args.p_attending = v !== 'no';
+        args.p_cafe = v === 'full';
+      }
       const data = await rpc(m === 'login' ? 'login' : 'register', args);
       token = data.token;
       store.set('pc_token', token);
@@ -474,11 +482,11 @@
   }
 
   async function setAttending(value) {
-    if (state.me.attending === value) return;
+    if (attendOf(state.me) === value) return;
     try {
-      const data = await rpc('set_attending', { p_token: token, p_attending: value });
+      const data = await rpc('set_attending', { p_token: token, p_attending: value !== 'no', p_cafe: value === 'full' });
       applyState(data.state);
-      toast(value ? '太好了，當天見！' : '沒關係，謝謝你告訴我們。');
+      toast(value === 'no' ? '沒關係，謝謝你告訴我們。' : '太好了，當天見！');
     } catch (err) {
       toast(err.message);
       refresh();
@@ -851,7 +859,7 @@
     const people = s.participants.map((p) => `
       <li>
         <span class="admin__main">${esc(p.name)}
-          <small>${p.attending ? '會到場' : '我不行QQ'}・${p.photoCount} 張・${p.hasVoted ? '已投票' : '還沒投票'}</small>
+          <small>${ATTEND[attendOf(p)]}・${p.photoCount} 張・${p.hasVoted ? '已投票' : '還沒投票'}</small>
         </span>
         <button type="button" class="btn btn--small btn--quiet" data-action="admin-remove" data-id="${p.id}" data-name="${esc(p.name)}">移除</button>
       </li>`).join('');
@@ -862,7 +870,8 @@
       </div>
       <div class="admin__stats">
         <p><b>${s.participants.length}</b><span>報名</span></p>
-        <p><b>${coming}</b><span>到場</span></p>
+        <p><b>${coming}</b><span>來登記</span></p>
+        <p><b>${s.participants.filter((p) => attendOf(p) === 'full').length}</b><span>去小樹屋</span></p>
         <p><b>${s.photos.length}</b><span>照片</span></p>
         <p><b>${voted}</b><span>已投票</span></p>
       </div>
@@ -937,7 +946,7 @@
         break;
       }
       case 'logout': logout(); break;
-      case 'attend': setAttending(el.dataset.value === 'yes'); break;
+      case 'attend': setAttending(el.dataset.value); break;
       case 'pick': $('file-input').click(); break;
       case 'delete-photo': deletePhoto(id); break;
       case 'retry-upload': {

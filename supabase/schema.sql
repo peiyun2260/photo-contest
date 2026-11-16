@@ -11,9 +11,12 @@ create table if not exists public.participants (
   name        text not null,
   key         text not null unique,          -- 比對重名用：全形半形、大小寫、空白都視為相同
   pin_hash    text not null,
-  attending   boolean not null default true,
+  attending   boolean not null default true,     -- 會來戶政事務所登記
+  cafe        boolean not null default true,     -- 也會去小樹屋（attending 為 false 時一定是 false）
   created_at  timestamptz not null default clock_timestamp()
 );
+alter table public.participants add column if not exists cafe boolean not null default true;
+update public.participants set cafe = false where not attending and cafe;
 
 create table if not exists public.sessions (
   token_hash      text primary key,
@@ -138,11 +141,11 @@ begin
     'maxPhotos', (select max_photos from settings where id = 1),
     'participants', coalesce((
       select jsonb_agg(jsonb_build_object(
-        'id', p.id, 'name', p.name, 'attending', p.attending,
+        'id', p.id, 'name', p.name, 'attending', p.attending, 'cafe', p.cafe,
         'photos', coalesce((select jsonb_agg(jsonb_build_object('id', ph.id, 'w', ph.w, 'h', ph.h) order by ph.created_at)
                             from photos ph where ph.owner_id = p.id), '[]'::jsonb)
       ) order by p.created_at) from participants p), '[]'::jsonb),
-    'me', (select jsonb_build_object('id', p.id, 'name', p.name, 'attending', p.attending,
+    'me', (select jsonb_build_object('id', p.id, 'name', p.name, 'attending', p.attending, 'cafe', p.cafe,
                     'vote', case when v_phase >= 2 then (select photo_id from votes where voter_id = p.id) end)
            from participants p where p.id = p_uid)
   );
@@ -183,7 +186,7 @@ returns jsonb language sql stable set search_path = public as $$
   select jsonb_build_object(
     'phase', _phase(),
     'participants', coalesce((select jsonb_agg(jsonb_build_object(
-        'id', p.id, 'name', p.name, 'attending', p.attending,
+        'id', p.id, 'name', p.name, 'attending', p.attending, 'cafe', p.cafe,
         'hasVoted', exists (select 1 from votes v where v.voter_id = p.id),  -- 只知道投了沒，不知道投給誰
         'photoCount', (select count(*) from photos ph where ph.owner_id = p.id)
       ) order by p.created_at) from participants p), '[]'::jsonb),
@@ -198,7 +201,8 @@ create or replace function public.get_state(p_token text default null)
 returns jsonb language sql stable security definer set search_path = public as $$
   select _state(_uid(p_token)) $$;
 
-create or replace function public.register(p_name text, p_pin text, p_attending boolean default true)
+drop function if exists public.register(text, text, boolean);
+create or replace function public.register(p_name text, p_pin text, p_attending boolean default true, p_cafe boolean default true)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
 declare v_name text := _clean_name(p_name); v_id text;
 begin
@@ -207,8 +211,9 @@ begin
   if char_length(v_name) > 12 then return _err('名字最多 12 個字。', 400); end if;
   if coalesce(p_pin, '') !~ '^\d{4,6}$' then return _err('密碼要是 4–6 位數字。', 400); end if;
   begin
-    insert into participants (name, key, pin_hash, attending)
-    values (v_name, _name_key(v_name), crypt(p_pin, gen_salt('bf', 8)), coalesce(p_attending, true))
+    insert into participants (name, key, pin_hash, attending, cafe)
+    values (v_name, _name_key(v_name), crypt(p_pin, gen_salt('bf', 8)), coalesce(p_attending, true),
+            coalesce(p_attending, true) and coalesce(p_cafe, true))
     returning id into v_id;
   exception when unique_violation then
     return _err('這個名字已經有人報名了。如果是你，請切到「我報過了」登入；不是的話，換個名字試試。', 409);
@@ -240,14 +245,15 @@ returns jsonb language sql security definer set search_path = public as $$
   delete from sessions where token_hash = _sha(coalesce(p_token, ''));
   select jsonb_build_object('ok', true) $$;
 
-create or replace function public.set_attending(p_token text, p_attending boolean)
+drop function if exists public.set_attending(text, boolean);
+create or replace function public.set_attending(p_token text, p_attending boolean, p_cafe boolean default true)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare v_uid text := _uid(p_token);
 begin
   if v_uid is null then return _err('請先登入。', 401); end if;
   if _phase() <> 1 then return _err('現在不能改出席狀態了。', 409); end if;
   if p_attending is null then return _err('資料格式不對。', 400); end if;
-  update participants set attending = p_attending where id = v_uid;
+  update participants set attending = p_attending, cafe = p_attending and coalesce(p_cafe, true) where id = v_uid;
   return jsonb_build_object('state', _state(v_uid));
 end $$;
 
@@ -362,8 +368,8 @@ end $$;
 -- ═════════ 權限：只開放上面這些對外函式 ═════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 grant execute on function
-  public.get_state(text), public.register(text, text, boolean), public.login(text, text),
-  public.logout(text), public.set_attending(text, boolean), public.add_photo(text, text, int, int),
+  public.get_state(text), public.register(text, text, boolean, boolean), public.login(text, text),
+  public.logout(text), public.set_attending(text, boolean, boolean), public.add_photo(text, text, int, int),
   public.delete_photo(text, text), public.cast_vote(text, text),
   public.admin_login(text), public.admin_state(text), public.admin_set_phase(text, int),
   public.admin_set_favorite(text, text, boolean), public.admin_remove_participant(text, text)

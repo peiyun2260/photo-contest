@@ -46,18 +46,22 @@
         <h2 id="info-title">當天的時間與地點</h2>
         <div class="when">
           <p><b>11.25</b><span>2026 年・星期三</span></p>
-          <p><b>15:00</b></p>
+          <p><b>15:00</b><span>一直到晚餐時間</span></p>
         </div>
-        <dl class="facts">
+        <dl class="facts facts--stops">
           <div>
-            <dt>地點</dt>
-            <dd>臺北市中正區戶政事務所<br>羅斯福路一段 8 號 5 樓
+            <dt>15:00</dt>
+            <dd><strong>登記結婚，大家一起拍照</strong><br>臺北市中正區戶政事務所<br>羅斯福路一段 8 號 5 樓
+              <span class="facts__note">捷運紅線／綠線到<strong>中正紀念堂站</strong>，出站步行幾分鐘，搭電梯到 5 樓。開車的話，同一棟大樓地下有南門市場停車場（汽車 B3–B5）。</span>
               <a class="btn btn--ghost btn--block facts__map" href="https://www.google.com/maps/search/?api=1&query=%E8%87%BA%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E6%88%B6%E6%94%BF%E4%BA%8B%E5%8B%99%E6%89%80" target="_blank" rel="noopener">用 Google 地圖開啟<span class="visually-hidden">（另開視窗）</span></a>
             </dd>
           </div>
           <div>
-            <dt>交通</dt>
-            <dd>捷運紅線／綠線到<strong>中正紀念堂站</strong>，出站步行幾分鐘，搭電梯到 5 樓。<br><span class="muted">開車的話，同一棟大樓地下有南門市場停車場（汽車 B3–B5）。</span></dd>
+            <dt>16:00</dt>
+            <dd><strong>移動到小樹屋，有一些小活動，投票也在這裡</strong><br>Happ. 小樹屋｜香楠分館
+              <span class="facts__note">待到晚餐時間，只來登記也沒關係。</span>
+              <a class="btn btn--ghost btn--block facts__map" href="https://maps.app.goo.gl/91fUB5PMZBACfkqE9" target="_blank" rel="noopener">用 Google 地圖開啟<span class="visually-hidden">（另開視窗）</span></a>
+            </dd>
           </div>
         </dl>
 
@@ -106,9 +110,10 @@
             <p class="field__error" id="f-pin-err" role="alert"></p>
           </div>
           <fieldset class="field" id="f-attend">
-            <legend>11/25 會來現場嗎？</legend>
-            <div class="choice">
-              <label><input type="radio" name="attending" value="yes" checked><span>我會到場</span></label>
+            <legend>11/25 會來嗎？</legend>
+            <div class="choice choice--stack">
+              <label><input type="radio" name="attending" value="full" checked><span>全程參加（登記＋小樹屋）</span></label>
+              <label><input type="radio" name="attending" value="registry"><span>只來登記</span></label>
               <label><input type="radio" name="attending" value="no"><span>我不行QQ</span></label>
             </div>
           </fieldset>
