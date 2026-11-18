@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       # 每次部署都換新的版本號，手機才不會用到舊的快取
-      - run: sed -i "s/__BUILD__/${GITHUB_SHA::7}/g" public/index.html
+      - run: sed -i "s/__BUILD__/${GITHUB_SHA::7}/g" public/index.html public/styles.css
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

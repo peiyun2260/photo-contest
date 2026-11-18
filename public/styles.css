@@ -1053,3 +1053,25 @@ dialog { color: var(--ink); }
 
 /* 頁尾目前沒有內容，就不佔空間 */
 .footer:empty { display: none; }
+
+/* ---------- 開場標題：思源宋體（只含標題用字的子集，見 scripts/subset-title-font.py） ---------- */
+@font-face {
+  font-family: "PhotoContestTitle";
+  src: url("fonts/title-serif.woff2?v=__BUILD__") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+#hero-title {
+  font-family: "PhotoContestTitle", "Noto Serif TC", "Songti TC", serif;
+  /* 比一般 h1 大 2pt */
+  font-size: clamp(calc(26px + 2pt), calc(7.6vw + 2pt), calc(34px + 2pt));
+  letter-spacing: 0;
+}
+@media (min-width: 420px) {
+  #hero-title { font-size: calc(34px + 2pt); }
+}
+@media (min-width: 641px) {
+  #hero-title { font-size: calc(56px + 2pt); }
+}
+/* 第二行在 320px 小手機會折到剩一個字：不換行，必要時稍微縮小剛好放進一行 */
+.hero-title__sub { white-space: nowrap; font-size: min(1em, calc((100vw - 80px) / 9)); }
