@@ -1,7 +1,7 @@
-"""把思源宋體（Source Han Serif TW SemiBold）縮成只含標題用到的字。
+"""把思源宋體（Source Han Serif TW Bold）縮成只含標題用到的字。
 
 用法：
-  python3 scripts/subset-title-font.py path/to/SourceHanSerifTW-SemiBold.otf
+  python3 scripts/subset-title-font.py path/to/SourceHanSerifTW-Bold.otf
 改了 app.js / index.html 裡的標題文字後，重跑一次即可。
 
 字型授權是 SIL OFL 1.1，「Source」是保留字型名稱，
@@ -41,8 +41,8 @@ for rec in font['name'].names:
     if rec.nameID in (1, 4, 16, 21):
         rec.string = NAME
     elif rec.nameID == 3:
-        rec.string = f'{NAME}-SemiBold-subset'
+        rec.string = f'{NAME}-Bold-subset'
     elif rec.nameID == 6:
-        rec.string = f'{NAME}-SemiBold'
+        rec.string = f'{NAME}-Bold'
 font.save(str(OUT))
 print(f'{OUT.relative_to(ROOT)}: {OUT.stat().st_size} bytes, {len(chars)} 字 → {"".join(sorted(chars))}')

@@ -1054,15 +1054,16 @@ dialog { color: var(--ink); }
 /* 頁尾目前沒有內容，就不佔空間 */
 .footer:empty { display: none; }
 
-/* ---------- 開場標題：思源宋體（只含標題用字的子集，見 scripts/subset-title-font.py） ---------- */
+/* ---------- 開場標題：思源宋體 Bold（只含標題用字的子集，見 scripts/subset-title-font.py） ---------- */
 @font-face {
   font-family: "PhotoContestTitle";
   src: url("fonts/title-serif.woff2?v=__BUILD__") format("woff2");
-  font-weight: 600;
+  font-weight: 700;
   font-display: swap;
 }
 #hero-title {
   font-family: "PhotoContestTitle", "Noto Serif TC", "Songti TC", serif;
+  font-weight: 700;
   /* 比一般 h1 大 2pt */
   font-size: clamp(calc(26px + 2pt), calc(7.6vw + 2pt), calc(34px + 2pt));
   letter-spacing: 0;
